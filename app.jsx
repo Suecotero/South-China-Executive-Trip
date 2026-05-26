@@ -58,7 +58,7 @@ function Hero() {
         </div>
 
         <h1 className="hero-title">
-          South China Executive Trip<span className="amp">&</span><span className="ys">Yangshuo</span>
+          SinoCircuit Executive Trip<span className="amp"></span><span className="ys"></span>
         </h1>
 
         <div className="hero-stage">
