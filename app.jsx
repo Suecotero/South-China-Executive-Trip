@@ -58,7 +58,7 @@ function Hero() {
         </div>
 
         <h1 className="hero-title">
-          SinoCircuit Executive Trip<span className="amp"></span><span className="ys"></span>
+          South China Executive Trip<span className="amp"></span><span className="ys"></span>
         </h1>
 
         <div className="hero-stage">
@@ -167,7 +167,7 @@ function Itinerary() {
     <section id="itinerary" className="itinerary">
       <div className="section-head">
         <div className="label-col">
-          <div className="eyebrow"><span className="dot" />Day by day</div>
+          <div className="eyebrow"><span className="dot" />Preliminary Schedule (details are subject to change)</div>
         </div>
         <h2>The <em>itinerary</em>, in full.</h2>
       </div>
