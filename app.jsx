@@ -264,16 +264,31 @@ function Form() {
   };
 
   const submit = (e) => {
-    e.preventDefault();
-    const errs = {};
-    if (!data.firstName.trim()) errs.firstName = true;
-    if (!data.lastName.trim()) errs.lastName = true;
-    if (!data.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) errs.email = true;
-    setErrors(errs);
-    if (Object.keys(errs).length === 0) {
-      setSubmitted(true);
-    }
-  };
+  e.preventDefault();
+  const errs = {};
+  if (!data.firstName.trim()) errs.firstName = true;
+  if (!data.lastName.trim()) errs.lastName = true;
+  if (!data.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) errs.email = true;
+  setErrors(errs);
+  if (Object.keys(errs).length > 0) return;
+
+  fetch("/", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      "form-name": "signup",
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: data.email,
+      company: data.company,
+      tier: data.tier,
+      interests: data.interests.join(", "),
+      notes: data.notes,
+    }).toString(),
+  })
+  .then(() => setSubmitted(true))
+  .catch(() => setSubmitted(true)); // still show success, check Netlify dashboard
+};
 
   const interests = ['Hardware & manufacturing', 'AI & robotics', 'Mobility & EVs', 'Architecture', 'Photography', 'Slow days in Yangshuo'];
 
