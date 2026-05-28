@@ -219,6 +219,16 @@ a { color: inherit; }
   object-fit: contain;
   display: block;
   filter: drop-shadow(0 30px 60px rgba(28, 26, 21, 0.18));
+  -webkit-mask-image: radial-gradient(
+    ellipse 80% 80% at 50% 50%,
+    black 50%,
+    transparent 100%
+  );
+  mask-image: radial-gradient(
+    ellipse 80% 80% at 50% 50%,
+    black 50%,
+    transparent 100%
+  );
 }
 @media (max-width: 900px) {
   .hero-content { padding: 88px 24px 24px; }
