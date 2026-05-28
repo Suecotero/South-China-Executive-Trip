@@ -19,7 +19,7 @@ function useScrolled(threshold = 80) {
   return { scrolled, pastHero };
 }
 
-function scrollTo(id) {
+function scrollToSection(id) {
   const el = document.getElementById(id);
   if (!el) return;
   const y = el.getBoundingClientRect().top + window.scrollY - 60;
@@ -30,15 +30,14 @@ function Nav({ onHero, scrolled }) {
   return (
     <nav className={`nav ${scrolled ? 'scrolled' : ''} ${onHero ? 'on-hero' : ''}`}>
       <div className="brand">
-        <div className="brand-mark">m</div>
-        <span>SINOCIRCUIT· PRIVATE JOURNEY</span>
+        <img src="assets/Sinocircuit logo horizontal.svg" alt="Sinocircuit logo" className="brand-logo" />
       </div>
       <div className="nav-links">
-        <span className="nav-link" onClick={() => scrollTo('overview')}>Overview</span>
-        <span className="nav-link" onClick={() => scrollTo('itinerary')}>Itinerary</span>
-        <span className="nav-link" onClick={() => scrollTo('included')}>Included</span>
-        <span className="nav-link" onClick={() => scrollTo('pricing')}>Pricing</span>
-        <button className="nav-cta" onClick={() => scrollTo('apply')}>Reserve a seat</button>
+        <span className="nav-link" onClick={() => scrollToSection('overview')}>Overview</span>
+        <span className="nav-link" onClick={() => scrollToSection('itinerary')}>Itinerary</span>
+        <span className="nav-link" onClick={() => scrollToSection('included')}>Included</span>
+        <span className="nav-link" onClick={() => scrollToSection('pricing')}>Pricing</span>
+        <button className="nav-cta" onClick={() => scrollToSection('apply')}>Reserve a seat</button>
       </div>
     </nav>);
 
@@ -303,7 +302,7 @@ function Form() {
             <div className="form-meta-row"><span className="l">Group size</span><span className="v">16 guests max</span></div>
             <div className="form-meta-row"><span className="l">Departure</span><span className="v">SEPT 18 — 24, 2026</span></div>
             <div className="form-meta-row"><span className="l">Seats left</span><span className="v">5 of 16</span></div>
-            <div className="form-meta-row"><span className="l">Applications close</span><span className="v">Mar 1, 2026</span></div>
+            <div className="form-meta-row"><span className="l">Applications close</span><span className="v">SEPT 1st, 2026</span></div>
           </div>
         </div>
 
@@ -383,7 +382,7 @@ function StickyCTA({ visible }) {
     <div className={`sticky-cta ${visible ? 'visible' : ''}`}>
       <span className="dot" />
       <span>10 OF 16 SEATS REMAIN · SEPT 18</span>
-      <button onClick={() => scrollTo('apply')}>Reserve →</button>
+      <button onClick={() => scrollToSection('apply')}>Reserve →</button>
     </div>);
 
 }
@@ -402,7 +401,7 @@ function App() {
       <footer>
         <div className="f-brand">Sinocircuit</div>
         <div>Private journeys for the operator class · Hong Kong / New York</div>
-        <div>© 2026 BREATH JOURNEYS</div>
+        <div>© 2026 SINOCIRCUIT JOURNEYS</div>
       </footer>
       <StickyCTA visible={pastHero} />
     </>);
