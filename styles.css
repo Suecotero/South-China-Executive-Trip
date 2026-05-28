@@ -131,6 +131,29 @@ a { color: inherit; }
   gap: 28px;
   align-items: center;
 }
+.lang-toggle {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.lang-toggle button {
+  border: 1px solid rgba(28, 26, 21, 0.2);
+  background: transparent;
+  color: inherit;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 9px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background .2s, color .2s, border-color .2s;
+}
+.lang-toggle button.active,
+.lang-toggle button:hover {
+  background: rgba(28, 26, 21, 0.08);
+  border-color: rgba(28, 26, 21, 0.5);
+}
 .nav-link {
   font-family: var(--mono);
   font-size: 11px;
@@ -228,12 +251,22 @@ a { color: inherit; }
   gap: 0.15em;
 }
 .hero-title .amp {
-  font-style: italic;
-  color: var(--jade);
+  font-style: normal;
+  font-family: inherit;
+  color: #cd071e;
   font-weight: 400;
   margin: 0 .15em;
 }
 .hero-title .ys { font-style: italic; }
+
+.hero-subtitle {
+  margin: 12px auto 0;
+  font-size: clamp(16px, 2vw, 22px);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(28, 26, 21, 0.78);
+  text-align: center;
+}
 
 .hero-bottom {
   display: grid;
