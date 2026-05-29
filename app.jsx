@@ -6,7 +6,7 @@ const SPANISH_COUNTRIES = ['ES', 'MX', 'CO', 'AR', 'CL', 'PE', 'VE', 'EC', 'GT',
 
 const TEXT = {
   en: {
-    pageTitle: 'Shenzhen & Yangshuo — Meridian Private Journeys',
+    pageTitle: 'Sinocircuit — China Private Journeys',
     metaDescription: 'A seven-day executive journey through Shenzhen and Yangshuo with curated factory visits, luxury stays, and expert logistics.',
     navOverview: 'Overview',
     navItinerary: 'Itinerary',
@@ -440,7 +440,8 @@ function Form({ text }) {
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
 
-    fetch('/', {
+    const action = window.location.protocol === 'file:' ? '/' : window.location.pathname;
+    fetch(action, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
@@ -488,7 +489,9 @@ function Form({ text }) {
             <h4>{text.thankYou} {data.firstName}.</h4>
             <p>{text.successBody}</p>
           </div> :
-          <form className="form" onSubmit={submit} noValidate>
+          <form name="signup" method="POST" data-netlify="true" netlify netlify-honeypot="bot-field" className="form" onSubmit={submit} noValidate>
+            <input type="hidden" name="form-name" value="signup" />
+            <p style={{ display: 'none' }}><label>Don’t fill this out if you're human: <input name="bot-field" /></label></p>
             <div className="form-row">
               <div className={`field ${errors.firstName ? 'error' : ''}`}>
                 <label>{text.firstName}</label>
