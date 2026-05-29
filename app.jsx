@@ -440,7 +440,7 @@ function Form({ text }) {
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
 
-    const action = window.location.protocol === 'file:' ? '/' : window.location.pathname;
+    const action = window.location.protocol === 'file:' ? '/' : '/en/';
     fetch(action, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -489,7 +489,7 @@ function Form({ text }) {
             <h4>{text.thankYou} {data.firstName}.</h4>
             <p>{text.successBody}</p>
           </div> :
-          <form name="signup" method="POST" data-netlify="true" netlify netlify-honeypot="bot-field" className="form" onSubmit={submit} noValidate>
+          <form name="signup" method="POST" netlify netlify-honeypot="bot-field" className="form" onSubmit={submit} noValidate>
             <input type="hidden" name="form-name" value="signup" />
             <p style={{ display: 'none' }}><label>Don’t fill this out if you're human: <input name="bot-field" /></label></p>
             <div className="form-row">
