@@ -233,9 +233,7 @@ a { color: inherit; }
 @media (max-width: 900px) {
   .hero-content { padding: 88px 24px 24px; }
 }
-.hero-content {
-  /* legacy override block removed */
-}
+
 
 .hero-top {
   display: flex;
