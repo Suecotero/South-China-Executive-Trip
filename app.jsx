@@ -199,54 +199,43 @@ function Nav({ onHero, scrolled, lang, onLanguageChange, text }) {
 }
 
 function Hero({ text }) {
-  const titleText = text.pageTitle.replace(' — Meridian Private Journeys', '');
-  const match = titleText.match(/\s(&|y)\s/i);
-  const before = match ? titleText.slice(0, match.index) : titleText;
-  const connector = match ? match[1] : '';
-  const after = match ? titleText.slice(match.index + match[0].length) : '';
-
   return (
-    <header className="hero">
-      <div className="hero-content">
-        <div className="hero-top">
-          <div className="eyebrow"><span className="dot" />{text.heroEdition}</div>
-          <div className="ticker">
-            <span>{text.heroTicker}</span>
-            <span className="sep" />
-            <span>22°N → 25°N</span>
+    <>
+      <header className="hero">
+        <div className="hero-content">
+          <div className="hero-top">
+            <div className="eyebrow"><span className="dot" />{text.heroEdition}</div>
+            <div className="ticker">
+              <span>{text.heroTicker}</span>
+              <span className="sep" />
+              <span>22°N → 25°N</span>
+            </div>
+          </div>
+
+          <div className="hero-stage">
+            <iframe src="../Trip Map - Animated.html" style={{ width: '100%', height: '100%', border: 'none', flex: 1 }} title="Animated Trip Map" allow="autoplay; fullscreen"></iframe>
+          </div>
+
+          <div className="hero-bottom">
+            <p className="hero-tag" style={{ fontSize: '22px' }}>
+              {text.heroTag}
+            </p>
+            <div className="fact">
+              <div className="fact-label">{text.factDuration}</div>
+              <div className="fact-value">7 days</div>
+            </div>
+            <div className="fact">
+              <div className="fact-label">{text.factDeparture}</div>
+              <div className="fact-value">Sept 18</div>
+            </div>
+            <div className="fact">
+              <div className="fact-label">{text.factFrom}</div>
+              <div className="fact-value">$5,900</div>
+            </div>
           </div>
         </div>
-
-        <h1 className="hero-title">
-          {before}
-          {connector ? <> <span className="amp">{connector}</span> {after}</> : null}
-          <span className="ys"></span>
-        </h1>
-        <p className="hero-subtitle">{text.pageSubtitle}</p>
-
-        <div className="hero-stage">
-          <img src={`${ASSET_ROOT}hero-painting.png`} alt="Shenzhen meets Yangshuo — ink painting" className="hero-img" />
-        </div>
-
-        <div className="hero-bottom">
-          <p className="hero-tag" style={{ fontSize: '22px' }}>
-            {text.heroTag}
-          </p>
-          <div className="fact">
-            <div className="fact-label">{text.factDuration}</div>
-            <div className="fact-value">7 days</div>
-          </div>
-          <div className="fact">
-            <div className="fact-label">{text.factDeparture}</div>
-            <div className="fact-value">Sept 18</div>
-          </div>
-          <div className="fact">
-            <div className="fact-label">{text.factFrom}</div>
-            <div className="fact-value">$5,900</div>
-          </div>
-        </div>
-      </div>
-    </header>);
+      </header>
+    </>);
 
 }
 

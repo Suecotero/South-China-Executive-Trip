@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sinocircuit — Animated Trip Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --cream: #f1e9d6;
+    --cream-soft: rgba(241,233,214,0.62);
+    --gold: #d8ad62;
+    --gold-bright: #f1cd86;
+    --gold-line: rgba(216,173,98,0.6);
+    --card: #f3ecda;
+    --card-ink: #1a1712;
+    --card-sub: #6c6452;
+    --serif: 'Cormorant Garamond', Georgia, serif;
+    --mono: 'Space Mono', monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body {
+    background: #06080b; color: var(--cream); font-family: var(--serif);
+    overflow: hidden; display: flex; align-items: center; justify-content: center; min-height: 100vh;
+  }
+  #viewport { position: relative; width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; }
+
+  #stage {
+    width: 1690px; height: 931px; flex: 0 0 auto; position: relative; transform-origin: center center;
+    background: #06080b; overflow: hidden; box-shadow: 0 40px 120px -30px rgba(0,0,0,0.85);
+  }
+  /* the real terrain map */
+  #bg { position: absolute; inset: 0; background: url('assets/region-map.png') center/cover no-repeat; }
+  /* tone + vignette so route, cards and type read cleanly over the imagery */
+  #bg::after {
+    content: ""; position: absolute; inset: 0;
+    background:
+      radial-gradient(120% 90% at 52% 46%, rgba(6,8,11,0) 38%, rgba(6,8,11,0.5) 100%),
+      linear-gradient(180deg, rgba(6,8,11,0.34) 0%, rgba(6,8,11,0.04) 22%, rgba(6,8,11,0.06) 72%, rgba(6,8,11,0.42) 100%);
+  }
+  #stage::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 7;
+    background-image: radial-gradient(rgba(255,240,210,0.02) 1px, transparent 1px);
+    background-size: 4px 4px; mix-blend-mode: screen; opacity: 0.45;
+  }
+
+  #mapinner { position: absolute; inset: 0; transform-origin: 50% 50%; }
+  svg#map { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; }
+
+  .route-base { fill: none; stroke: rgba(241,233,214,0.1); stroke-width: 2.4; stroke-linecap: round; stroke-dasharray: 2 9; }
+  #route { fill: none; stroke: var(--gold-bright); stroke-width: 3.4; stroke-linecap: round; stroke-linejoin: round;
+           filter: drop-shadow(0 0 7px rgba(241,205,134,0.65)); }
+  .leader { fill: none; stroke: var(--gold-line); stroke-width: 1.4; }
+  .leader-dot { fill: var(--gold-bright); filter: drop-shadow(0 0 3px rgba(241,205,134,0.8)); }
+  .node .ring { fill: none; stroke: rgba(255,244,220,0.55); stroke-width: 1.6; }
+  .node .dot { fill: var(--gold-bright); filter: drop-shadow(0 0 5px rgba(241,205,134,0.9)); }
+  .lat { fill: var(--cream-soft); font-family: var(--mono); font-size: 13px; letter-spacing: 0.18em; opacity: 0.4; }
+
+  #marker { position: absolute; left: 0; top: 0; transform: translate(-50%,-50%); opacity: 0; z-index: 4; }
+  #marker .halo { position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin: -26px 0 0 -26px; border-radius: 50%; background: radial-gradient(circle, rgba(241,205,134,0.55) 0%, rgba(241,205,134,0) 68%); }
+  #marker .core { position: absolute; left: 50%; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; background: var(--gold-bright); box-shadow: 0 0 0 3px rgba(10,12,16,0.8), 0 0 16px 3px rgba(241,205,134,0.85); }
+
+  .card {
+    position: absolute; z-index: 3; opacity: 0; background: var(--card); padding: 9px 9px 0; border-radius: 3px;
+    box-shadow: 0 30px 60px -16px rgba(0,0,0,0.8), 0 0 0 1px rgba(0,0,0,0.25), 0 1px 0 rgba(255,255,255,0.35) inset;
+    will-change: transform, opacity;
+  }
+  .card .photo { width: 100%; height: 152px; display: block; overflow: hidden; border-radius: 2px; background: #2a251c; }
+  .card .photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .card .cap { padding: 12px 7px 15px; }
+  .cap .lbl { font-family: var(--mono); font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: #9a7a3e; }
+  .cap .nm { font-family: var(--serif); font-style: italic; font-weight: 500; font-size: 33px; line-height: 1; color: var(--card-ink); margin: 5px 0 6px; }
+  .cap .nm .cn { font-family: var(--mono); font-style: normal; font-size: 12px; color: #b89048; letter-spacing: 0.04em; margin-left: 7px; vertical-align: 3px; }
+  .cap .ds { font-family: var(--serif); font-weight: 500; font-size: 16.5px; line-height: 1.34; color: var(--card-sub); }
+
+  /* chrome */
+  #topkick { position: absolute; top: 36px; left: 46px; z-index: 5; opacity: 0; font-family: var(--mono); font-size: 13.5px; letter-spacing: 0.32em; text-transform: uppercase; color: var(--gold-bright); white-space: nowrap; text-shadow: 0 1px 8px rgba(0,0,0,0.7); }
+  #compass { position: absolute; right: 44px; bottom: 40px; z-index: 5; opacity: 0; font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; color: var(--cream-soft); text-align: center; line-height: 1.4; text-shadow: 0 1px 6px rgba(0,0,0,0.8); }
+  #compass .n { color: var(--gold-bright); font-size: 12px; }
+
+  #brand { position: absolute; left: 56px; bottom: 54px; z-index: 5; opacity: 0; }
+  #brand::before { content: ""; position: absolute; left: -56px; right: -120px; top: -50px; bottom: -54px; z-index: -1;
+    background: radial-gradient(120% 130% at 12% 80%, rgba(6,8,11,0.66) 0%, rgba(6,8,11,0) 70%); }
+  #brand .rule { width: 54px; height: 1px; background: var(--gold-line); margin-bottom: 18px; }
+  #brand .h { font-family: var(--serif); font-style: italic; font-weight: 500; font-size: 54px; line-height: 1; color: var(--cream); white-space: nowrap; text-shadow: 0 2px 16px rgba(0,0,0,0.6); }
+  #brand .h span { font-style: normal; color: var(--gold-bright); margin: 0 12px; }
+  #brand .sb { font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--cream-soft); margin-top: 15px; text-shadow: 0 1px 8px rgba(0,0,0,0.7); }
+  #brand .sb b { color: var(--gold-bright); font-weight: 400; }
+
+  #controls { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; align-items: center; z-index: 50; }
+  .btn { font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--cream); background: rgba(20,24,30,0.72); border: 1px solid rgba(216,173,98,0.5); padding: 9px 16px; border-radius: 30px; cursor: pointer; backdrop-filter: blur(6px); transition: background 0.2s, border-color 0.2s; }
+  .btn:hover { background: rgba(216,173,98,0.24); border-color: var(--gold-bright); }
+  #hint { font-family: var(--mono); font-size: 13px; letter-spacing: 0.1em; color: rgba(238, 237, 234, 0.884); }
+  @media print { #controls { display: none; } }
+</style>
+</head>
+<body>
+  <div id="viewport">
+    <div id="stage" data-screen-label="00s">
+      <div id="mapinner">
+        <div id="bg"></div>
+        <svg id="map" viewBox="0 0 1690 931" preserveAspectRatio="xMidYMid slice">
+          <text class="lat" x="20" y="206">25°N</text>
+          <text class="lat" x="20" y="612">23°N</text>
+
+          <path class="route-base" d="M1350,725 Q1210,640 1085,560 Q700,360 290,180 Q330,400 505,600" />
+          <path id="route" d="M1350,725 Q1210,640 1085,560 Q700,360 290,180 Q330,400 505,600" />
+
+          <g id="leaders">
+            <path class="leader" data-leader="hk" d="M1350,725 L992,724" />
+            <path class="leader" data-leader="sz" d="M1085,560 L1356,330" />
+            <path class="leader" data-leader="gl" d="M290,180 L470,184" />
+            <path class="leader" data-leader="ys" d="M505,600 L362,572" />
+          </g>
+          <g id="leaderdots">
+            <circle class="leader-dot" cx="1350" cy="725" r="3.4" />
+            <circle class="leader-dot" cx="1085" cy="560" r="3.4" />
+            <circle class="leader-dot" cx="290" cy="180" r="3.4" />
+            <circle class="leader-dot" cx="505" cy="600" r="3.4" />
+          </g>
+          <g id="nodes"></g>
+        </svg>
+
+        <div id="marker"><div class="halo"></div><div class="core"></div></div>
+
+        <!-- Hong Kong — islands lower-right, start (card sits over the dark water, center) -->
+        <div class="card" data-card="hk" style="left:702px; top:612px; width:290px;">
+          <div class="photo"><img src="assets/hong-kong.jpg" alt="Hong Kong International Airport, Chek Lap Kok" /></div>
+          <div class="cap">
+            <div class="lbl">Stop 01 · Arrival</div>
+            <div class="nm">Hong Kong Airport</div>
+            <div class="ds">Touch down at the gateway to the south. Direct ferry to Shenzhen.</div>
+          </div>
+        </div>
+
+        <!-- Shenzhen — mainland coast, card top-right over sky -->
+        <div class="card" data-card="sz" style="left:1356px; top:84px; width:290px;">
+          <div class="photo"><img src="assets/shenzhen.jpg" alt="Shenzhen skyline at golden hour" /></div>
+          <div class="cap">
+            <div class="lbl">Stop 02 · Days 1–3</div>
+            <div class="nm">Shenzhen<span class="cn">深圳</span></div>
+            <div class="ds">The world's hardware capital — factories, labs and neon.</div>
+          </div>
+        </div>
+
+        <!-- Guilin — karst headwaters, card top-center-left -->
+        <div class="card" data-card="gl" style="left:474px; top:56px; width:296px;">
+          <div class="photo"><img src="assets/guilin-rail.jpg" alt="High-speed train crossing the karst" /></div>
+          <div class="cap">
+            <div class="lbl">Stop 03 · Day 4</div>
+            <div class="nm">Guilin<span class="cn">桂林</span></div>
+            <div class="ds">Bullet train north into Guangxi's limestone country.</div>
+          </div>
+        </div>
+
+        <!-- Yangshuo — down the river, card mid-left -->
+        <div class="card" data-card="ys" style="left:58px; top:288px; width:292px;">
+          <div class="photo"><img src="assets/yangshuo.jpg" alt="Yangshuo karst valley" /></div>
+          <div class="cap">
+            <div class="lbl">Stop 04 · Days 5–7</div>
+            <div class="nm">Yangshuo<span class="cn">阳朔</span></div>
+            <div class="ds">Li River cruise to valleys of timeless limestone peaks.</div>
+          </div>
+        </div>
+
+        <div id="topkick">SINOCIRCUIT · SOUTH CHINA EXECUTIVE TRIP · </div>
+        <div id="compass"><span class="n">N</span><br />↑</div>
+        <div id="brand">
+          <div class="rule"></div>
+          <div class="h">Shenzhen <span>→</span> Yangshuo</div>
+          <div class="sb">Executive Immersion · <b>sinocircuit.net</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="controls">
+    <button class="btn" id="replay">↻ Replay</button>
+    <span id="hint">· Conceptual travel map — Not geographically accurate · </span>
+  </div>
+
+  <template id="__bundler_thumbnail">
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100" height="100" fill="#0c1018"/>
+      <path d="M80,80 Q60,55 26,28" fill="none" stroke="#f1cd86" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="80" cy="80" r="4" fill="#f1cd86"/>
+      <circle cx="26" cy="28" r="4" fill="#f1cd86"/>
+      <circle cx="52" cy="52" r="3.4" fill="#f1e9d6"/>
+    </svg>
+  </template>
+
+  <script>
+  (function () {
+    const stage = document.getElementById('stage');
+    const mapinner = document.getElementById('mapinner');
+    const routeEl = document.getElementById('route');
+    const markerEl = document.getElementById('marker');
+    const titleEl = document.getElementById('topkick');
+    const brandEl = document.getElementById('brand');
+    const compassEl = document.getElementById('compass');
+    const nodesGroup = document.getElementById('nodes');
+
+    const BW = 1690, BH = 931;
+    function fit() {
+      const s = Math.min(window.innerWidth / BW, window.innerHeight / BH) * 0.965;
+      stage.style.transform = 'scale(' + s + ')';
+    }
+    window.addEventListener('resize', fit); fit();
+
+    const routeLen = routeEl.getTotalLength();
+    routeEl.style.strokeDasharray = routeLen;
+
+    const NODES = [
+      { key: 'hk', x: 1350, y: 725, popT: 1.9 },
+      { key: 'sz', x: 1085, y: 560, popT: 6.2 },
+      { key: 'gl', x: 290,  y: 180, popT: 11.2 },
+      { key: 'ys', x: 505,  y: 600, popT: 15.8 }
+    ];
+    function fractionFor(px, py) {
+      let best = 0, bestD = Infinity; const N = 1600;
+      for (let i = 0; i <= N; i++) {
+        const l = (i / N) * routeLen; const p = routeEl.getPointAtLength(l);
+        const d = (p.x - px) * (p.x - px) + (p.y - py) * (p.y - py);
+        if (d < bestD) { bestD = d; best = l; }
+      }
+      return best / routeLen;
+    }
+    NODES.forEach(n => { n.frac = fractionFor(n.x, n.y); });
+    NODES[0].frac = 0; NODES[NODES.length - 1].frac = 1;
+    const f1 = NODES[1].frac, f2 = NODES[2].frac, f3 = 1;
+
+    const nodeEls = NODES.map(n => {
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.setAttribute('class', 'node');
+      g.innerHTML = '<circle class="ring" r="12"></circle><circle class="dot" r="6"></circle>';
+      g.setAttribute('transform', 'translate(' + n.x + ' ' + n.y + ') scale(1)');
+      nodesGroup.appendChild(g);
+      return g;
+    });
+
+    const leaderEls = {};
+    document.querySelectorAll('.leader').forEach(p => {
+      const len = p.getTotalLength();
+      p.style.strokeDasharray = len; p.style.strokeDashoffset = len;
+      leaderEls[p.dataset.leader] = { el: p, len: len };
+    });
+    const cardEls = {};
+    document.querySelectorAll('.card').forEach(c => { cardEls[c.dataset.card] = c; });
+
+    const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+    const c01 = x => clamp(x, 0, 1);
+    const easeInOut = x => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+    const easeOut = x => 1 - Math.pow(1 - x, 3);
+    const ramp = (t, t0, dur) => c01((t - t0) / dur);
+
+    const phases = [
+      { a: 0,    b: 1.6,  p0: 0,  p1: 0,  m: false },
+      { a: 1.6,  b: 3.0,  p0: 0,  p1: 0,  m: false },
+      { a: 3.0,  b: 6.2,  p0: 0,  p1: f1, m: true },
+      { a: 6.2,  b: 7.6,  p0: f1, p1: f1, m: false },
+      { a: 7.6,  b: 11.2, p0: f1, p1: f2, m: true },
+      { a: 11.2, b: 12.8, p0: f2, p1: f2, m: false },
+      { a: 12.8, b: 15.8, p0: f2, p1: f3, m: true },
+      { a: 15.8, b: 25.0, p0: f3, p1: f3, m: false }
+    ];
+    function progressAt(t) {
+      for (const ph of phases) {
+        if (t <= ph.b) {
+          const local = (t - ph.a) / (ph.b - ph.a);
+          const e = ph.m ? easeInOut(c01(local)) : c01(local);
+          return ph.p0 + (ph.p1 - ph.p0) * e;
+        }
+      }
+      return f3;
+    }
+
+    const cardData = { hk: 1.9, sz: 6.2, gl: 11.2, ys: 15.8 };
+    const DURATION = 25;
+    let startT = performance.now(); let rafId = null;
+
+    function render(t) {
+      const now = performance.now() / 1000;
+      // subtle establishing push-in on the terrain, then settle
+      const zoom = 1.045 - 0.045 * easeOut(c01(t / 5.5));
+      mapinner.style.transform = 'scale(' + zoom.toFixed(4) + ')';
+
+      compassEl.style.opacity = ramp(t, 0.5, 1.0) * 0.92;
+      titleEl.style.opacity = ramp(t, 0.6, 1.1);
+      titleEl.style.transform = 'translateY(' + ((1 - ramp(t, 0.6, 1.1)) * -8).toFixed(2) + 'px)';
+
+      const p = progressAt(t);
+      routeEl.style.strokeDashoffset = routeLen * (1 - p);
+      const pt = routeEl.getPointAtLength(routeLen * p);
+      markerEl.style.left = pt.x + 'px';
+      markerEl.style.top = pt.y + 'px';
+      markerEl.style.opacity = ramp(t, 1.5, 0.5);
+      markerEl.querySelector('.halo').style.transform = 'scale(' + (0.85 + 0.3 * (0.5 + 0.5 * Math.sin(now * 4.2))).toFixed(3) + ')';
+
+      NODES.forEach((n, i) => {
+        const arrive = ramp(t, n.popT, 0.4);
+        const bumpT = c01((t - n.popT) / 0.5);
+        let s = 1 + 0.55 * Math.sin(Math.PI * bumpT);
+        if (i === NODES.length - 1 && t > n.popT + 0.5) s = 1 + 0.13 * (0.5 + 0.5 * Math.sin(now * 3));
+        nodeEls[i].setAttribute('transform', 'translate(' + n.x + ' ' + n.y + ') scale(' + s.toFixed(3) + ')');
+        nodeEls[i].querySelector('.dot').style.opacity = (0.2 + 0.8 * arrive).toFixed(3);
+      });
+
+      Object.keys(cardData).forEach(key => {
+        const popT = cardData[key];
+        const ld = leaderEls[key];
+        const lr = easeOut(ramp(t, popT + 0.1, 0.7));
+        ld.el.style.strokeDashoffset = ld.len * (1 - lr);
+        const card = cardEls[key];
+        const cr = easeOut(ramp(t, popT + 0.35, 0.95));
+        card.style.opacity = cr.toFixed(3);
+        card.style.transform = 'translateY(' + ((1 - cr) * 18).toFixed(2) + 'px) scale(' + (0.96 + 0.04 * cr).toFixed(3) + ')';
+      });
+
+      brandEl.style.opacity = ramp(t, 17.4, 1.5);
+      brandEl.style.transform = 'translateY(' + ((1 - ramp(t, 17.4, 1.5)) * 12).toFixed(2) + 'px)';
+
+      const sec = Math.min(DURATION, Math.floor(t));
+      const lbl = (sec < 10 ? '0' + sec : sec) + 's';
+      if (stage.getAttribute('data-screen-label') !== lbl) stage.setAttribute('data-screen-label', lbl);
+    }
+
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function loop() {
+      let t = (performance.now() - startT) / 1000;
+      if (t > DURATION) t = DURATION;
+      render(t);
+      if (t < DURATION) rafId = requestAnimationFrame(loop);
+    }
+    function play() { if (rafId) cancelAnimationFrame(rafId); startT = performance.now(); loop(); }
+
+    if (reduced) render(DURATION);
+    else {
+      window.addEventListener('load', () => setTimeout(play, 150));
+      if (document.readyState === 'complete') setTimeout(play, 150);
+    }
+    window.__seek = function (t) { if (rafId) cancelAnimationFrame(rafId); render(t); };
+    document.getElementById('replay').addEventListener('click', play);
+    window.addEventListener('keydown', e => { if (e.code === 'Space') { e.preventDefault(); play(); } });
+  })();
+  </script>
+</body>
+</html>

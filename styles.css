@@ -184,6 +184,29 @@ a { color: inherit; }
 .nav.on-hero .nav-cta:hover { background: var(--ink); color: var(--surface); border-color: var(--ink); }
 
 /* ---------- Hero ---------- */
+.fullscreen-map-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 100;
+  background: #06080b;
+  transition: all 1.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.6s ease-out 1.4s;
+}
+.fullscreen-map-overlay.animate-out {
+  top: 96px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 900px;
+  height: auto;
+  aspect-ratio: 1;
+  z-index: 5;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .hero {
   position: relative;
   min-height: 100vh;
@@ -205,11 +228,24 @@ a { color: inherit; }
 }
 .hero-stage {
   flex: 1;
-  min-height: 0;
+  /* make the hero-stage break out of the centered content and span the viewport */
+  width: 100vw;
+  max-width: none;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  aspect-ratio: 16 / 9;
+  min-height: 50vh;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
   position: relative;
+  overflow: hidden;
+}
+.hero-stage iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  object-fit: cover;
 }
 .hero-img {
   max-width: 100%;
@@ -241,8 +277,13 @@ a { color: inherit; }
   align-items: flex-start;
   gap: 40px;
 }
-.hero-top .eyebrow { color: var(--muted); }
+..hero-top .eyebrow { color: var(--muted); }
 .hero-top .eyebrow .dot { background: var(--jade); }
+
+.hero-title,
+.hero-subtitle {
+  display: none;
+}
 
 .hero-title {
   font-family: var(--serif);
