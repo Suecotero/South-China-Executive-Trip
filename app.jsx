@@ -53,7 +53,7 @@ const TEXT = {
     submitErrorRequired: 'Required',
     submitErrorEmail: 'Enter a valid email',
     dayLabel: 'Day',
-    stickyText: '10 OF 16 SEATS REMAIN · SEPT 18',
+    stickyText: '6 OF 12 SEATS REMAIN · SEPT 18',
     stickyButton: 'Reserve →',
     footerLineTwo: 'Private journeys for the operator class · Hong Kong / New York',
     footerCopyright: '© 2026 SINOCIRCUIT JOURNEYS',
@@ -178,21 +178,44 @@ function getAssetRoot() {
 const ASSET_ROOT = getAssetRoot();
 
 function Nav({ onHero, scrolled, lang, onLanguageChange, text }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const handleNavClick = (id) => {
+    setMenuOpen(false);
+    scrollToSection(id);
+  };
+
+  const handleLanguageChange = (newLang) => {
+    setMenuOpen(false);
+    onLanguageChange(newLang);
+  };
+
   return (
     <nav className={`nav ${scrolled ? 'scrolled' : ''} ${onHero ? 'on-hero' : ''}`}>
       <div className="brand">
         <img src={`${ASSET_ROOT}Sinocircuit logo horizontal.svg`} alt="Sinocircuit logo" className="brand-logo" />
       </div>
-      <div className="nav-links">
-        <span className="nav-link" onClick={() => scrollToSection('overview')}>{text.navOverview}</span>
-        <span className="nav-link" onClick={() => scrollToSection('itinerary')}>{text.navItinerary}</span>
-        <span className="nav-link" onClick={() => scrollToSection('included')}>{text.navIncluded}</span>
-        <span className="nav-link" onClick={() => scrollToSection('pricing')}>{text.navPricing}</span>
-        <button className="nav-cta" onClick={() => scrollToSection('apply')}>{text.navReserve}</button>
+      <button
+        type="button"
+        className={`nav-burger ${menuOpen ? 'open' : ''}`}
+        onClick={() => setMenuOpen((prev) => !prev)}
+        aria-expanded={menuOpen}
+        aria-label="Toggle navigation"
+      >
+        <span />
+        <span />
+        <span />
+      </button>
+      <div className={`nav-links ${menuOpen ? 'open' : ''}`}>
+        <span className="nav-link" onClick={() => handleNavClick('overview')}>{text.navOverview}</span>
+        <span className="nav-link" onClick={() => handleNavClick('itinerary')}>{text.navItinerary}</span>
+        <span className="nav-link" onClick={() => handleNavClick('included')}>{text.navIncluded}</span>
+        <span className="nav-link" onClick={() => handleNavClick('pricing')}>{text.navPricing}</span>
+        <button className="nav-cta" onClick={() => handleNavClick('apply')}>{text.navReserve}</button>
       </div>
       <div className="lang-toggle">
-        <button type="button" className={lang === 'en' ? 'active' : ''} onClick={() => onLanguageChange('en')}>{text.langEn}</button>
-        <button type="button" className={lang === 'es' ? 'active' : ''} onClick={() => onLanguageChange('es')}>{text.langEs}</button>
+        <button type="button" className={lang === 'en' ? 'active' : ''} onClick={() => handleLanguageChange('en')}>{text.langEn}</button>
+        <button type="button" className={lang === 'es' ? 'active' : ''} onClick={() => handleLanguageChange('es')}>{text.langEs}</button>
       </div>
     </nav>);
 
