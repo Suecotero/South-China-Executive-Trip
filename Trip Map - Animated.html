@@ -31,6 +31,52 @@
   #stage {
     width: 1690px; height: 931px; flex: 0 0 auto; position: relative; transform-origin: center center;
     background: #06080b; overflow: hidden; box-shadow: 0 40px 120px -30px rgba(0,0,0,0.85);
+    opacity: 0;
+    transition: opacity 0.35s ease;
+  }
+  #loader {
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #06080b;
+    color: #f1e9d6;
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: 12px;
+  }
+  #loader .loader-inner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 24px;
+    border: 1px solid rgba(241,233,214,0.2);
+    border-radius: 999px;
+    background: rgba(6,8,11,0.92);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  }
+  #loader .spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(241,233,214,0.3);
+    border-top-color: #f1e9d6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  .loaded #loader {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+  }
+  .loaded #stage {
+    opacity: 1;
   }
   /* the real terrain map */
   #bg { position: absolute; inset: 0; background: url('assets/region-map.png') center/cover no-repeat; }
@@ -93,7 +139,7 @@
   #controls { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; align-items: center; z-index: 50; }
   .btn { font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--cream); background: rgba(20,24,30,0.72); border: 1px solid rgba(216,173,98,0.5); padding: 9px 16px; border-radius: 30px; cursor: pointer; backdrop-filter: blur(6px); transition: background 0.2s, border-color 0.2s; }
   .btn:hover { background: rgba(216,173,98,0.24); border-color: var(--gold-bright); }
-  #hint { font-family: var(--mono); font-size: 13px; letter-spacing: 0.1em; color: rgba(238, 237, 234, 0.95); text-shadow: 0 0 3px rgba(255,255,255,0.85), 0 0 8px rgba(255,255,255,0.35); }
+  #hint { font-family: var(--mono); font-size: 13px; letter-spacing: 0.1em; color: #fff; text-shadow: 0 0 2px rgba(255,255,255,0.92), 0 0 5px rgba(255,255,255,0.55), 0 0 8px rgba(0,0,0,0.4); }
   @media print { #controls { display: none; } }
   @media (max-width: 760px) {
     .btn { font-size: 10px; padding: 7px 12px; }
@@ -182,6 +228,13 @@
     </div>
   </div>
 
+  <div id="loader">
+    <div class="loader-inner">
+      <div class="spinner"></div>
+      <span>Loading map…</span>
+    </div>
+  </div>
+
   <div id="controls">
     <button class="btn" id="replay">↻ Replay</button>
     <span id="hint">· Conceptual travel map — Not geographically accurate · </span>
@@ -210,7 +263,7 @@
 
     const BW = 1690, BH = 931;
     function fit() {
-      const s = Math.min(window.innerWidth / BW, window.innerHeight / BH) * 1.04;
+      const s = Math.min(window.innerWidth / BW, window.innerHeight / BH) * 0.965;
       stage.style.transform = 'scale(' + s + ')';
     }
     window.addEventListener('resize', fit); fit();
@@ -341,10 +394,16 @@
     }
     function play() { if (rafId) cancelAnimationFrame(rafId); startT = performance.now(); loop(); }
 
-    if (reduced) render(DURATION);
-    else {
-      window.addEventListener('load', () => setTimeout(play, 150));
-      if (document.readyState === 'complete') setTimeout(play, 150);
+    function finishLoading() {
+      document.body.classList.add('loaded');
+    }
+
+    if (reduced) {
+      render(DURATION);
+      finishLoading();
+    } else {
+      window.addEventListener('load', () => setTimeout(() => { finishLoading(); play(); }, 150));
+      if (document.readyState === 'complete') setTimeout(() => { finishLoading(); play(); }, 150);
     }
     window.__seek = function (t) { if (rafId) cancelAnimationFrame(rafId); render(t); };
     document.getElementById('replay').addEventListener('click', play);
