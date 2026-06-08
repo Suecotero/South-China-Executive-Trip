@@ -93,8 +93,13 @@
   #controls { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; align-items: center; z-index: 50; }
   .btn { font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--cream); background: rgba(20,24,30,0.72); border: 1px solid rgba(216,173,98,0.5); padding: 9px 16px; border-radius: 30px; cursor: pointer; backdrop-filter: blur(6px); transition: background 0.2s, border-color 0.2s; }
   .btn:hover { background: rgba(216,173,98,0.24); border-color: var(--gold-bright); }
-  #hint { font-family: var(--mono); font-size: 13px; letter-spacing: 0.1em; color: rgba(238, 237, 234, 0.884); }
+  #hint { font-family: var(--mono); font-size: 13px; letter-spacing: 0.1em; color: rgba(238, 237, 234, 0.95); text-shadow: 0 0 3px rgba(255,255,255,0.85), 0 0 8px rgba(255,255,255,0.35); }
   @media print { #controls { display: none; } }
+  @media (max-width: 760px) {
+    .btn { font-size: 10px; padding: 7px 12px; }
+    #hint { font-size: 10px; letter-spacing: 0.08em; }
+    #controls { gap: 8px; flex-direction: column; padding: 0 10px; }
+  }
 </style>
 </head>
 <body>
@@ -205,7 +210,7 @@
 
     const BW = 1690, BH = 931;
     function fit() {
-      const s = Math.min(window.innerWidth / BW, window.innerHeight / BH) * 0.965;
+      const s = Math.min(window.innerWidth / BW, window.innerHeight / BH) * 1.04;
       stage.style.transform = 'scale(' + s + ')';
     }
     window.addEventListener('resize', fit); fit();

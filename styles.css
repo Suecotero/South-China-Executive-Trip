@@ -112,6 +112,7 @@ a { color: inherit; }
   display: block;
   width: auto;
   height: auto;
+  max-height: 28px;
 }
 .brand-mark {
   width: 28px; height: 28px;
@@ -260,6 +261,9 @@ a { color: inherit; }
   .brand {
     font-size: 10px;
     gap: 8px;
+  }
+  .brand-logo {
+    max-height: 20px;
   }
   .nav-links {
     gap: 14px;
