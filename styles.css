@@ -381,7 +381,7 @@ a { color: inherit; }
   align-items: flex-start;
   gap: 40px;
 }
-..hero-top .eyebrow { color: var(--muted); }
+.hero-top .eyebrow { color: var(--muted); }
 .hero-top .eyebrow .dot { background: var(--jade); }
 
 .hero-title,
@@ -423,8 +423,8 @@ a { color: inherit; }
 
 .hero-bottom {
   display: grid;
-  grid-template-columns: 1fr auto auto auto;
-  gap: 40px;
+  grid-template-columns: minmax(0, 1fr) auto auto auto auto;
+  gap: 24px 32px;
   align-items: end;
   border-top: 1px solid rgba(28, 26, 21, 0.18);
   padding-top: 22px;
@@ -441,6 +441,7 @@ a { color: inherit; }
 @media (max-width: 900px) {
   .hero-bottom { grid-template-columns: 1fr 1fr; gap: 20px; }
   .hero-tag { grid-column: 1 / -1; }
+  .hero-contact-actions { grid-column: 1 / -1; justify-self: start; }
 }
 
 .fact {
@@ -448,6 +449,51 @@ a { color: inherit; }
   flex-direction: column;
   gap: 6px;
   min-width: 100px;
+}
+.hero-contact-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  grid-column: 5;
+  justify-self: end;
+}
+.hero-contact-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  border: 1px solid rgba(28, 26, 21, 0.2);
+  border-radius: 999px;
+  text-decoration: none;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  background: rgba(255, 255, 255, 0.35);
+  transition: background .2s, color .2s, border-color .2s, transform .2s;
+}
+.hero-contact-link:hover {
+  background: rgba(28, 26, 21, 0.08);
+  border-color: rgba(28, 26, 21, 0.5);
+  transform: translateY(-1px);
+}
+.hero-contact-link--linkedin {
+  width: 36px;
+  padding: 8px 0;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  background: #0A66C2;
+  border-color: #0A66C2;
+}
+.hero-contact-link--linkedin:hover {
+  background: #004182;
+  border-color: #004182;
 }
 .fact-label {
   font-family: var(--mono);

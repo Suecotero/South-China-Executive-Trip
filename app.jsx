@@ -255,6 +255,20 @@ function Hero({ text }) {
               <div className="fact-label">{text.factFrom}</div>
               <div className="fact-value">$5,900</div>
             </div>
+            <div className="hero-contact-actions">
+              <a className="hero-contact-link" href="mailto:matias@sinocircuit.net">
+                matias@sinocircuit.net
+              </a>
+              <a
+                className="hero-contact-link hero-contact-link--linkedin"
+                href="https://www.linkedin.com/in/mat%C3%ADas-otero-johansson-51ab6759/"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Visit Matías Otero Johansson on LinkedIn"
+              >
+                in
+              </a>
+            </div>
           </div>
         </div>
       </header>
