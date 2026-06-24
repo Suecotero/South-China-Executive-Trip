@@ -62,7 +62,7 @@ const TEXT = {
     langEs: 'ES',
   },
   es: {
-    pageTitle: 'Shenzhen y Yangshuo — Meridian Private Journeys',
+    pageTitle: 'Shenzhen y Yangshuo — Sinocircuit',
     pageSubtitle: 'South China Executive Trip',
     metaDescription: 'Un viaje ejecutivo de siete días por Shenzhen y Yangshuo con visitas a fábricas, alojamientos de lujo y logística experta.',
     navOverview: 'Visión general',
