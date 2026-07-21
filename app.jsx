@@ -172,6 +172,9 @@ function buildLanguagePath(lang) {
 function getAssetRoot() {
   const pathParts = window.location.pathname.split('/');
   const isLangFolder = pathParts.some((part) => SUPPORTED_LANGS.includes(part));
+  if (window.location.pathname.startsWith('/welcome/')) {
+    return '/assets/';
+  }
   return isLangFolder ? '../assets/' : 'assets/';
 }
 
@@ -213,9 +216,25 @@ function Nav({ onHero, scrolled, lang, onLanguageChange, text }) {
         <span className="nav-link" onClick={() => handleNavClick('pricing')}>{text.navPricing}</span>
         <button className="nav-cta" onClick={() => handleNavClick('apply')}>{text.navReserve}</button>
       </div>
-      <div className="lang-toggle">
-        <button type="button" className={lang === 'en' ? 'active' : ''} onClick={() => handleLanguageChange('en')}>{text.langEn}</button>
-        <button type="button" className={lang === 'es' ? 'active' : ''} onClick={() => handleLanguageChange('es')}>{text.langEs}</button>
+      <div className="nav-right-stack">
+        <div className="lang-toggle">
+          <button type="button" className={lang === 'en' ? 'active' : ''} onClick={() => handleLanguageChange('en')}>{text.langEn}</button>
+          <button type="button" className={lang === 'es' ? 'active' : ''} onClick={() => handleLanguageChange('es')}>{text.langEs}</button>
+        </div>
+        <div className="nav-contact-links">
+          <a className="nav-contact-link" href="mailto:matias@sinocircuit.net">
+            matias@sinocircuit.net
+          </a>
+          <a
+            className="nav-contact-link nav-contact-link--linkedin"
+            href="https://www.linkedin.com/in/mat%C3%ADas-otero-johansson-51ab6759/"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Visit Matías Otero Johansson on LinkedIn"
+          >
+            in
+          </a>
+        </div>
       </div>
     </nav>);
 
@@ -236,7 +255,7 @@ function Hero({ text }) {
           </div>
 
           <div className="hero-stage">
-            <iframe src="../Trip Map - Animated.html" style={{ width: '100%', height: '100%', border: 'none', flex: 1 }} title="Animated Trip Map" allow="autoplay; fullscreen"></iframe>
+            <iframe src={window.location.pathname.startsWith('/welcome/') ? '/Trip%20Map%20-%20Animated.html' : '../Trip Map - Animated.html'} style={{ width: '100%', height: '100%', border: 'none', flex: 1 }} title="Animated Trip Map" allow="autoplay; fullscreen"></iframe>
           </div>
 
           <div className="hero-bottom">
@@ -581,6 +600,774 @@ function Form({ text }) {
 
 }
 
+function getQuestionnaireStorageKey() {
+  return 'sinocircuit-questionnaire-daniel';
+}
+
+function getQuestionnaireRoute() {
+  if (typeof window === 'undefined') return '';
+  return window.location.pathname;
+}
+
+function getQuestionnaireInitialState() {
+  const stored = typeof window !== 'undefined' ? window.localStorage.getItem(getQuestionnaireStorageKey()) : null;
+  let parsed = null;
+  try {
+    parsed = stored ? JSON.parse(stored) : null;
+  } catch (error) {
+    parsed = null;
+  }
+
+  return {
+    fullName: 'Daniel Bradtke',
+    email: 'daniel@djld.vc',
+    nationality: '',
+    passportNumber: '',
+    passportExpiry: '',
+    chinaEntry: '',
+    arrivalAirport: '',
+    flightDetails: '',
+    arrivingEarly: '',
+    airportPickup: '',
+    roomPreference: '',
+    singleOccupancy: '',
+    accessibility: '',
+    dietaryRestrictions: [],
+    dietaryOther: '',
+    foodAllergies: '',
+    spiceTolerance: '',
+    hardNoFoods: '',
+    alcohol: '',
+    coffeeDependency: '',
+    activityComfort: '',
+    medicalConditions: '',
+    travelInsurance: '',
+    wechatInstalled: '',
+    alipaySetup: '',
+    vpnNeeds: [],
+    vpnOther: '',
+    vpnRecommendation: false,
+    commsChannel: '',
+    focusAreas: ['Gaming', 'Fintech & security', 'Health-tech & longevity', 'Consumer & media platforms'],
+    gamingInterests: [],
+    fintechInterests: [],
+    consumerInterests: [],
+    healthInterests: [],
+    objectives: [],
+    deployCapital: '',
+    typicalCheckSize: '',
+    companiesOrPeople: '',
+    counterparts: [],
+    firstTimeInChina: '',
+    existingChinaExposure: '',
+    mandarin: '',
+    positioning: '',
+    sensitivity: '',
+    meetings: '',
+    willingToExtend: '',
+    tripWin: '',
+    guilinGoals: [],
+    culturalInterests: '',
+    wellness: [],
+    plusOne: '',
+    plusOneDetails: '',
+    souvenirs: '',
+    bucketList: '',
+    preferredName: 'Daniel',
+    introBio: '',
+    logoFileName: '',
+    logoFileBase64: '',
+    emergencyContact: '',
+    photoConsent: '',
+    testimonialConsent: '',
+    anythingElse: '',
+    ...parsed,
+  };
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result || '');
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function formatAnswer(value) {
+  if (Array.isArray(value)) {
+    return value.filter(Boolean).join(', ');
+  }
+  if (value === null || value === undefined || value === '') {
+    return '—';
+  }
+  return String(value);
+}
+
+function QuestionnairePage() {
+  const [step, setStep] = useState(0);
+  const [formData, setFormData] = useState(getQuestionnaireInitialState);
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+
+  const steps = [
+    { title: 'Travel & logistics', blurb: 'Start with the basics so we can plan the arrival, stay, and comfort.' },
+    { title: 'Food & health', blurb: 'We’ll keep the week thoughtful and logistics-safe.' },
+    { title: 'Connectivity & payments', blurb: 'We want your daily life to feel seamless in China.' },
+    { title: 'Business & investment objectives', blurb: 'We’ll shape the meetings and the narrative around your goals.' },
+    { title: 'Guilin / Yangshuo & personal', blurb: 'We want the Yangshuo stretch to fit your mood and pace.' },
+    { title: 'Admin & consent', blurb: 'Last details and permissions so we can make this easy on the ground.' },
+    { title: 'Review', blurb: 'Check everything once before we send it over.' },
+  ];
+
+  useEffect(() => {
+    document.title = 'Daniel pre-trip questionnaire · Sinocircuit';
+    document.documentElement.lang = 'en';
+    const robotsTag = document.querySelector('meta[name="robots"]');
+    if (!robotsTag) {
+      const tag = document.createElement('meta');
+      tag.setAttribute('name', 'robots');
+      tag.setAttribute('content', 'noindex,nofollow');
+      document.head.appendChild(tag);
+    } else {
+      robotsTag.setAttribute('content', 'noindex,nofollow');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!submitted) {
+      window.localStorage.setItem(getQuestionnaireStorageKey(), JSON.stringify(formData));
+    }
+  }, [formData, submitted]);
+
+  useEffect(() => {
+    if (submitted) {
+      window.localStorage.removeItem(getQuestionnaireStorageKey());
+    }
+  }, [submitted]);
+
+  const updateField = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const toggleArrayValue = (field, value) => {
+    setFormData((prev) => {
+      const current = prev[field] || [];
+      return {
+        ...prev,
+        [field]: current.includes(value) ? current.filter((item) => item !== value) : [...current, value],
+      };
+    });
+  };
+
+  const moveFocusArea = (index, direction) => {
+    setFormData((prev) => {
+      const next = [...prev.focusAreas];
+      const swapIndex = index + direction;
+      if (swapIndex < 0 || swapIndex >= next.length) return prev;
+      [next[index], next[swapIndex]] = [next[swapIndex], next[index]];
+      return { ...prev, focusAreas: next };
+    });
+  };
+
+  const validateStep = () => {
+    const nextErrors = {};
+    if (step === 0) {
+      if (!formData.fullName.trim()) nextErrors.fullName = 'Please enter your full name.';
+      if (!formData.nationality.trim()) nextErrors.nationality = 'Please add your nationality or passport country.';
+      if (!formData.passportExpiry) nextErrors.passportExpiry = 'Passport expiry date is required.';
+      if (!formData.chinaEntry) nextErrors.chinaEntry = 'Please tell us your China entry status.';
+      if (!formData.airportPickup) nextErrors.airportPickup = 'Please tell us if you need pickup.';
+      if (!formData.roomPreference) nextErrors.roomPreference = 'Please choose a room preference.';
+      if (!formData.singleOccupancy) nextErrors.singleOccupancy = 'Please tell us about room occupancy.';
+    } else if (step === 1) {
+      if (!formData.dietaryRestrictions.length && !formData.dietaryOther.trim()) nextErrors.dietaryRestrictions = 'Please share your dietary needs.';
+      if (!formData.foodAllergies.trim()) nextErrors.foodAllergies = 'Please add any food allergies.';
+      if (!formData.spiceTolerance) nextErrors.spiceTolerance = 'Please tell us your spice tolerance.';
+      if (!formData.alcohol) nextErrors.alcohol = 'Please tell us about alcohol preferences.';
+      if (!formData.coffeeDependency) nextErrors.coffeeDependency = 'Please tell us about your coffee or tea preference.';
+      if (!formData.activityComfort) nextErrors.activityComfort = 'Please tell us about your activity comfort.';
+      if (!formData.travelInsurance) nextErrors.travelInsurance = 'Please tell us about travel insurance.';
+    } else if (step === 2) {
+      if (!formData.wechatInstalled) nextErrors.wechatInstalled = 'Please tell us about WeChat.';
+      if (!formData.alipaySetup) nextErrors.alipaySetup = 'Please tell us about mobile payments.';
+      if (!formData.commsChannel) nextErrors.commsChannel = 'Please choose a preferred comms channel.';
+    } else if (step === 3) {
+      if (!formData.focusAreas.length) nextErrors.focusAreas = 'Please rank the focus areas.';
+      if (!formData.objectives.length) nextErrors.objectives = 'Please tell us what you hope to get out of the trip.';
+      if (!formData.counterparts.length) nextErrors.counterparts = 'Please tell us who to prioritize.';
+      if (!formData.firstTimeInChina) nextErrors.firstTimeInChina = 'Please tell us whether this is your first trip to China.';
+      if (!formData.mandarin) nextErrors.mandarin = 'Please tell us about your Mandarin level.';
+      if (!formData.positioning) nextErrors.positioning = 'Please tell us how to position you.';
+      if (!formData.meetings) nextErrors.meetings = 'Please tell us if you want curated 1:1 meetings.';
+      if (!formData.tripWin.trim()) nextErrors.tripWin = 'Please tell us what would make the trip a clear win.';
+    } else if (step === 4) {
+      if (!formData.plusOne) nextErrors.plusOne = 'Please tell us whether you are bringing a guest or colleague.';
+    } else if (step === 5) {
+      if (!formData.preferredName.trim()) nextErrors.preferredName = 'Please add a preferred name.';
+      if (!formData.introBio.trim()) nextErrors.introBio = 'Please add a one-line bio.';
+      if (!formData.emergencyContact.trim()) nextErrors.emergencyContact = 'Please add an emergency contact.';
+      if (!formData.photoConsent) nextErrors.photoConsent = 'Please choose a photo/video option.';
+      if (!formData.testimonialConsent) nextErrors.testimonialConsent = 'Please tell us how to use your testimonial.';
+    }
+    return nextErrors;
+  };
+
+  const handleNext = () => {
+    const nextErrors = validateStep();
+    if (Object.keys(nextErrors).length) {
+      setErrors(nextErrors);
+      return;
+    }
+    setErrors({});
+    if (step < steps.length - 1) {
+      setStep(step + 1);
+    }
+  };
+
+  const handleBack = () => {
+    setErrors({});
+    if (step > 0) {
+      setStep(step - 1);
+    }
+  };
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    setSubmitError('');
+    try {
+      const body = {
+        recipient: 'matias@sinocircuit.net',
+        clientName: formData.fullName || 'Daniel Bradtke',
+        email: formData.email,
+        trip: 'September 18–24, 2026 Shenzhen + Guilin/Yangshuo',
+        answers: formData,
+      };
+
+      const response = await fetch('/.netlify/functions/submit-questionnaire', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) throw new Error('Submission failed');
+      setSubmitted(true);
+    } catch (error) {
+      setSubmitError('We could not reach the delivery service. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const renderStepContent = () => {
+    if (step === 6) {
+      return (
+        <div className="wizard-review">
+          <div className="review-card">
+            <h3>Review your answers</h3>
+            <p>Everything is saved locally, so you can come back and finish later if needed.</p>
+            <div className="review-list">
+              <div className="review-row">
+                <strong>Full name</strong>
+                <span>{formatAnswer(formData.fullName)}</span>
+                <button type="button" className="review-edit" onClick={() => setStep(0)}>Edit</button>
+              </div>
+              <div className="review-row">
+                <strong>Nationality / passport country</strong>
+                <span>{formatAnswer(formData.nationality)}</span>
+                <button type="button" className="review-edit" onClick={() => setStep(0)}>Edit</button>
+              </div>
+              <div className="review-row">
+                <strong>Passport expiry</strong>
+                <span>{formatAnswer(formData.passportExpiry)}</span>
+                <button type="button" className="review-edit" onClick={() => setStep(0)}>Edit</button>
+              </div>
+              <div className="review-row">
+                <strong>Travel & logistics</strong>
+                <span>{[formData.chinaEntry, formData.airportPickup, formData.roomPreference, formData.singleOccupancy].filter(Boolean).join(' · ') || '—'}</span>
+                <button type="button" className="review-edit" onClick={() => setStep(0)}>Edit</button>
+              </div>
+              <div className="review-row">
+                <strong>Food & health</strong>
+                <span>{[formatAnswer(formData.dietaryRestrictions), formatAnswer(formData.travelInsurance)].join(' · ')}</span>
+                <button type="button" className="review-edit" onClick={() => setStep(1)}>Edit</button>
+              </div>
+              <div className="review-row">
+                <strong>Connectivity & payments</strong>
+                <span>{[formData.wechatInstalled, formData.alipaySetup, formData.commsChannel].filter(Boolean).join(' · ') || '—'}</span>
+                <button type="button" className="review-edit" onClick={() => setStep(2)}>Edit</button>
+              </div>
+              <div className="review-row">
+                <strong>Business objectives</strong>
+                <span>{[formatAnswer(formData.objectives), formatAnswer(formData.counterparts)].join(' · ')}</span>
+                <button type="button" className="review-edit" onClick={() => setStep(3)}>Edit</button>
+              </div>
+              <div className="review-row">
+                <strong>Guilin / Yangshuo</strong>
+                <span>{[formatAnswer(formData.guilinGoals), formatAnswer(formData.plusOne)].join(' · ')}</span>
+                <button type="button" className="review-edit" onClick={() => setStep(4)}>Edit</button>
+              </div>
+              <div className="review-row">
+                <strong>Admin & consent</strong>
+                <span>{[formData.preferredName, formData.photoConsent, formData.testimonialConsent].filter(Boolean).join(' · ') || '—'}</span>
+                <button type="button" className="review-edit" onClick={() => setStep(5)}>Edit</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="wizard-stack">
+        {step === 0 && (
+          <div className="wizard-grid">
+            <div className="wizard-field">
+              <label htmlFor="fullName">Full name as it appears on passport*</label>
+              <input id="fullName" name="fullName" type="text" value={formData.fullName} onChange={(e) => updateField('fullName', e.target.value)} aria-invalid={Boolean(errors.fullName)} />
+              {errors.fullName && <p className="field-error">{errors.fullName}</p>}
+            </div>
+            <div className="wizard-field">
+              <label htmlFor="nationality">Nationality / passport issuing country*</label>
+              <input id="nationality" name="nationality" type="text" value={formData.nationality} onChange={(e) => updateField('nationality', e.target.value)} aria-invalid={Boolean(errors.nationality)} />
+              {errors.nationality && <p className="field-error">{errors.nationality}</p>}
+            </div>
+            <div className="wizard-field">
+              <label htmlFor="passportNumber">Passport number</label>
+              <input id="passportNumber" name="passportNumber" type="text" value={formData.passportNumber} onChange={(e) => updateField('passportNumber', e.target.value)} />
+              <p className="field-helper">Optional here — you can share this securely later if you prefer.</p>
+            </div>
+            <div className="wizard-field">
+              <label htmlFor="passportExpiry">Passport expiry date*</label>
+              <input id="passportExpiry" name="passportExpiry" type="date" value={formData.passportExpiry} onChange={(e) => updateField('passportExpiry', e.target.value)} aria-invalid={Boolean(errors.passportExpiry)} />
+              {errors.passportExpiry && <p className="field-error">{errors.passportExpiry}</p>}
+            </div>
+            <fieldset className="wizard-field">
+              <legend>China entry*</legend>
+              {['I already hold a valid China visa', 'I’ll enter visa-free', 'I need help', 'Not sure'].map((option) => (
+                <label key={option} className="choice-row"><input type="radio" name="chinaEntry" value={option} checked={formData.chinaEntry === option} onChange={() => updateField('chinaEntry', option)} /> {option}</label>
+              ))}
+              {errors.chinaEntry && <p className="field-error">{errors.chinaEntry}</p>}
+            </fieldset>
+            <fieldset className="wizard-field">
+              <legend>Arrival airport preference*</legend>
+              {['Hong Kong (HKG)', 'Shenzhen (SZX)', 'Guangzhou (CAN)', 'Not booked yet', 'Not sure'].map((option) => (
+                <label key={option} className="choice-row"><input type="radio" name="arrivalAirport" value={option} checked={formData.arrivalAirport === option} onChange={() => updateField('arrivalAirport', option)} /> {option}</label>
+              ))}
+            </fieldset>
+            <div className="wizard-field">
+              <label htmlFor="flightDetails">Flight details if booked</label>
+              <textarea id="flightDetails" name="flightDetails" rows="3" value={formData.flightDetails} onChange={(e) => updateField('flightDetails', e.target.value)} placeholder="Arrival + departure flight numbers, dates, times" />
+            </div>
+            <div className="wizard-field">
+              <label htmlFor="arrivingEarly">Arriving early or staying later than Sep 18–24?</label>
+              <textarea id="arrivingEarly" name="arrivingEarly" rows="3" value={formData.arrivingEarly} onChange={(e) => updateField('arrivingEarly', e.target.value)} />
+            </div>
+            <fieldset className="wizard-field">
+              <legend>Need airport pickup?*</legend>
+              {['Yes', 'No', 'Not sure'].map((option) => (
+                <label key={option} className="choice-row"><input type="radio" name="airportPickup" value={option} checked={formData.airportPickup === option} onChange={() => updateField('airportPickup', option)} /> {option}</label>
+              ))}
+              {errors.airportPickup && <p className="field-error">{errors.airportPickup}</p>}
+            </fieldset>
+            <fieldset className="wizard-field">
+              <legend>Room preference*</legend>
+              {['King', 'Twin', 'No preference'].map((option) => (
+                <label key={option} className="choice-row"><input type="radio" name="roomPreference" value={option} checked={formData.roomPreference === option} onChange={() => updateField('roomPreference', option)} /> {option}</label>
+              ))}
+              {errors.roomPreference && <p className="field-error">{errors.roomPreference}</p>}
+            </fieldset>
+            <fieldset className="wizard-field">
+              <legend>Single occupancy (own room)?*</legend>
+              {['Yes', 'Sharing is fine'].map((option) => (
+                <label key={option} className="choice-row"><input type="radio" name="singleOccupancy" value={option} checked={formData.singleOccupancy === option} onChange={() => updateField('singleOccupancy', option)} /> {option}</label>
+              ))}
+              {errors.singleOccupancy && <p className="field-error">{errors.singleOccupancy}</p>}
+            </fieldset>
+            <div className="wizard-field">
+              <label htmlFor="accessibility">Accessibility or mobility needs</label>
+              <textarea id="accessibility" name="accessibility" rows="3" value={formData.accessibility} onChange={(e) => updateField('accessibility', e.target.value)} />
+            </div>
+          </div>
+        )}
+
+        {step === 1 && (
+          <div className="wizard-grid">
+            <fieldset className="wizard-field">
+              <legend>Dietary restrictions*</legend>
+              {['None', 'Vegetarian', 'Vegan', 'Pescatarian', 'Halal', 'Kosher', 'Gluten-free', 'Dairy-free'].map((option) => (
+                <label key={option} className="choice-row"><input type="checkbox" checked={formData.dietaryRestrictions.includes(option)} onChange={() => toggleArrayValue('dietaryRestrictions', option)} /> {option}</label>
+              ))}
+              <div className="subfield">
+                <label htmlFor="dietaryOther">Other</label>
+                <input id="dietaryOther" type="text" value={formData.dietaryOther} onChange={(e) => updateField('dietaryOther', e.target.value)} />
+              </div>
+              {errors.dietaryRestrictions && <p className="field-error">{errors.dietaryRestrictions}</p>}
+            </fieldset>
+            <div className="wizard-field">
+              <label htmlFor="foodAllergies">Food allergies (esp. nuts, shellfish)*</label>
+              <input id="foodAllergies" type="text" value={formData.foodAllergies} onChange={(e) => updateField('foodAllergies', e.target.value)} placeholder="none" aria-invalid={Boolean(errors.foodAllergies)} />
+              {errors.foodAllergies && <p className="field-error">{errors.foodAllergies}</p>}
+            </div>
+            <fieldset className="wizard-field">
+              <legend>Spice tolerance*</legend>
+              {['Mild', 'Medium', 'Bring it on'].map((option) => (
+                <label key={option} className="choice-row"><input type="radio" name="spiceTolerance" value={option} checked={formData.spiceTolerance === option} onChange={() => updateField('spiceTolerance', option)} /> {option}</label>
+              ))}
+              {errors.spiceTolerance && <p className="field-error">{errors.spiceTolerance}</p>}
+            </fieldset>
+            <div className="wizard-field">
+              <label htmlFor="hardNoFoods">Any foods you won’t eat / hard nos</label>
+              <textarea id="hardNoFoods" rows="3" value={formData.hardNoFoods} onChange={(e) => updateField('hardNoFoods', e.target.value)} />
+            </div>
+            <fieldset className="wizard-field">
+              <legend>Alcohol*</legend>
+              {['I drink (incl. trying baijiu)', 'Wine & beer only', 'I don’t drink'].map((option) => (
+                <label key={option} className="choice-row"><input type="radio" name="alcohol" value={option} checked={formData.alcohol === option} onChange={() => updateField('alcohol', option)} /> {option}</label>
+              ))}
+              {errors.alcohol && <p className="field-error">{errors.alcohol}</p>}
+            </fieldset>
+            <fieldset className="wizard-field">
+              <legend>Coffee dependency*</legend>
+              {['Need my daily coffee', 'Tea is fine', 'Either'].map((option) => (
+                <label key={option} className="choice-row"><input type="radio" name="coffeeDependency" value={option} checked={formData.coffeeDependency === option} onChange={() => updateField('coffeeDependency', option)} /> {option}</label>
+              ))}
+              {errors.coffeeDependency && <p className="field-error">{errors.coffeeDependency}</p>}
+            </fieldset>
+            <fieldset className="wizard-field">
+              <legend>Physical activity comfort for Yangshuo*</legend>
+              {['Very active', 'Moderate', 'Prefer light', 'Have limitations (describe)'].map((option) => (
+                <label key={option} className="choice-row"><input type="radio" name="activityComfort" value={option} checked={formData.activityComfort === option} onChange={() => updateField('activityComfort', option)} /> {option}</label>
+              ))}
+              {errors.activityComfort && <p className="field-error">{errors.activityComfort}</p>}
+            </fieldset>
+            <div className="wizard-field">
+              <label htmlFor="medicalConditions">Medical conditions or medications we should be aware of for travel</label>
+              <textarea id="medicalConditions" rows="4" value={formData.medicalConditions} onChange={(e) => updateField('medicalConditions', e.target.value)} />
+              <p className="field-helper">Note: some medications (e.g. certain stimulants and strong painkillers) are restricted in China — flag anything you’re unsure about.</p>
+            </div>
+            <fieldset className="wizard-field">
+              <legend>Do you have travel insurance for the trip?*</legend>
+              {['Yes', 'Not yet', 'Need a recommendation'].map((option) => (
+                <label key={option} className="choice-row"><input type="radio" name="travelInsurance" value={option} checked={formData.travelInsurance === option} onChange={() => updateField('travelInsurance', option)} /> {option}</label>
+              ))}
+              {errors.travelInsurance && <p className="field-error">{errors.travelInsurance}</p>}
+            </fieldset>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="wizard-grid">
+            <fieldset className="wizard-field">
+              <legend>Do you have WeChat installed?*</legend>
+              {['Yes', 'No', 'Need help setting it up'].map((option) => (
+                <label key={option} className="choice-row"><input type="radio" name="wechatInstalled" value={option} checked={formData.wechatInstalled === option} onChange={() => updateField('wechatInstalled', option)} /> {option}</label>
+              ))}
+              {errors.wechatInstalled && <p className="field-error">{errors.wechatInstalled}</p>}
+              <p className="field-helper">It’s essential in China for comms and payments.</p>
+            </fieldset>
+            <fieldset className="wizard-field">
+              <legend>Alipay / WeChat Pay set up with a foreign card?*</legend>
+              {['Yes', 'No', 'Need help'].map((option) => (
+                <label key={option} className="choice-row"><input type="radio" name="alipaySetup" value={option} checked={formData.alipaySetup === option} onChange={() => updateField('alipaySetup', option)} /> {option}</label>
+              ))}
+              {errors.alipaySetup && <p className="field-error">{errors.alipaySetup}</p>}
+            </fieldset>
+            <fieldset className="wizard-field">
+              <legend>VPN / eSIM needs</legend>
+              {['I use Google/Gmail', 'WhatsApp', 'Instagram', 'X'].map((option) => (
+                <label key={option} className="choice-row"><input type="checkbox" checked={formData.vpnNeeds.includes(option)} onChange={() => toggleArrayValue('vpnNeeds', option)} /> {option}</label>
+              ))}
+              <label className="choice-row"><input type="checkbox" checked={formData.vpnRecommendation} onChange={() => updateField('vpnRecommendation', !formData.vpnRecommendation)} /> I’ll need a VPN recommendation</label>
+              <div className="subfield">
+                <label htmlFor="vpnOther">Other</label>
+                <input id="vpnOther" type="text" value={formData.vpnOther} onChange={(e) => updateField('vpnOther', e.target.value)} />
+              </div>
+            </fieldset>
+            <fieldset className="wizard-field">
+              <legend>Preferred comms channel during the trip*</legend>
+              {['WeChat', 'WhatsApp', 'Signal', 'Email', 'Other'].map((option) => (
+                <label key={option} className="choice-row"><input type="radio" name="commsChannel" value={option} checked={formData.commsChannel === option} onChange={() => updateField('commsChannel', option)} /> {option}</label>
+              ))}
+              {errors.commsChannel && <p className="field-error">{errors.commsChannel}</p>}
+            </fieldset>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="wizard-grid">
+            <fieldset className="wizard-field">
+              <legend>Rank DJLD’s focus areas by how much China exposure you want*</legend>
+              <div className="rank-list">
+                {formData.focusAreas.map((item, index) => (
+                  <div key={item} className="rank-row">
+                    <span>{index + 1}. {item}</span>
+                    <div className="rank-actions">
+                      <button type="button" onClick={() => moveFocusArea(index, -1)} disabled={index === 0}>↑</button>
+                      <button type="button" onClick={() => moveFocusArea(index, 1)} disabled={index === formData.focusAreas.length - 1}>↓</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {errors.focusAreas && <p className="field-error">{errors.focusAreas}</p>}
+            </fieldset>
+            <fieldset className="wizard-field">
+              <legend>Gaming interests</legend>
+              {['Studios & publishers', 'Mobile / mini-game ecosystem (WeChat, Douyin)', 'Esports & teams', 'Game- & live-streaming platforms', 'Live-dealer / studio production', 'Gaming hardware & peripherals (handhelds, controllers, VR/AR)', 'Engines & tooling', 'AI in games', 'Payments, KYC & anti-fraud for gaming', 'Affiliate & user acquisition', 'Social casino / sweepstakes mechanics'].map((option) => (
+                <label key={option} className="choice-row"><input type="checkbox" checked={formData.gamingInterests.includes(option)} onChange={() => toggleArrayValue('gamingInterests', option)} /> {option}</label>
+              ))}
+            </fieldset>
+            <fieldset className="wizard-field">
+              <legend>Fintech & security interests</legend>
+              {['Super-app payments (WeChat/Alipay)', 'Embedded finance', 'Identity / KYC', 'Anti-fraud & risk', 'Crypto / stablecoin rails'].map((option) => (
+                <label key={option} className="choice-row"><input type="checkbox" checked={formData.fintechInterests.includes(option)} onChange={() => toggleArrayValue('fintechInterests', option)} /> {option}</label>
+              ))}
+            </fieldset>
+            <fieldset className="wizard-field">
+              <legend>Consumer & media interests</legend>
+              {['Short-video & live-commerce', 'Creator / affiliate networks', 'Content platforms', 'Ad-tech'].map((option) => (
+                <label key={option} className="choice-row"><input type="checkbox" checked={formData.consumerInterests.includes(option)} onChange={() => toggleArrayValue('consumerInterests', option)} /> {option}</label>
+              ))}
+            </fieldset>
+            <fieldset className="wizard-field">
+              <legend>Health-tech & longevity interests</legend>
+              {['Wearables & diagnostics', 'Consumer health / supplements', 'Clinics & longevity'].map((option) => (
+                <label key={option} className="choice-row"><input type="checkbox" checked={formData.healthInterests.includes(option)} onChange={() => toggleArrayValue('healthInterests', option)} /> {option}</label>
+              ))}
+            </fieldset>
+            <fieldset className="wizard-field">
+              <legend>What are you hoping to get out of the trip?*</legend>
+              {['Source deals / portfolio companies', 'Find partners or JV', 'Source suppliers / OEM for a product', 'Bring Chinese products to Western markets', 'Take portfolio companies into China', 'Market intelligence', 'Personal interest'].map((option) => (
+                <label key={option} className="choice-row"><input type="checkbox" checked={formData.objectives.includes(option)} onChange={() => toggleArrayValue('objectives', option)} /> {option}</label>
+              ))}
+              {errors.objectives && <p className="field-error">{errors.objectives}</p>}
+            </fieldset>
+            <fieldset className="wizard-field">
+              <legend>Looking to deploy capital on or around this trip?</legend>
+              {['Yes', 'Maybe', 'Not on this trip'].map((option) => (
+                <label key={option} className="choice-row"><input type="radio" name="deployCapital" value={option} checked={formData.deployCapital === option} onChange={() => updateField('deployCapital', option)} /> {option}</label>
+              ))}
+              <label className="subfield">
+                <span>Typical check size (optional)</span>
+                <input type="text" value={formData.typicalCheckSize} onChange={(e) => updateField('typicalCheckSize', e.target.value)} />
+              </label>
+            </fieldset>
+            <div className="wizard-field">
+              <label htmlFor="companiesOrPeople">Specific companies or people you’d love to meet or see</label>
+              <textarea id="companiesOrPeople" rows="4" value={formData.companiesOrPeople} onChange={(e) => updateField('companiesOrPeople', e.target.value)} />
+            </div>
+            <fieldset className="wizard-field">
+              <legend>Which counterparts should we prioritize?*</legend>
+              {['Founders', 'VCs / funds & co-investors', 'Corp dev / BD at major platforms', 'Manufacturers / OEMs', 'Service providers (payments, KYC, localization)', 'Industry bodies / government'].map((option) => (
+                <label key={option} className="choice-row"><input type="checkbox" checked={formData.counterparts.includes(option)} onChange={() => toggleArrayValue('counterparts', option)} /> {option}</label>
+              ))}
+              {errors.counterparts && <p className="field-error">{errors.counterparts}</p>}
+            </fieldset>
+            <fieldset className="wizard-field">
+              <legend>First time in China?*</legend>
+              {['Yes', 'No'].map((option) => (
+                <label key={option} className="choice-row"><input type="radio" name="firstTimeInChina" value={option} checked={formData.firstTimeInChina === option} onChange={() => updateField('firstTimeInChina', option)} /> {option}</label>
+              ))}
+              {errors.firstTimeInChina && <p className="field-error">{errors.firstTimeInChina}</p>}
+              <label className="subfield">
+                <span>Existing China exposure, contacts, or portfolio?</span>
+                <textarea rows="3" value={formData.existingChinaExposure} onChange={(e) => updateField('existingChinaExposure', e.target.value)} />
+              </label>
+            </fieldset>
+            <fieldset className="wizard-field">
+              <legend>Any Mandarin?*</legend>
+              {['None', 'A little', 'Conversational+'].map((option) => (
+                <label key={option} className="choice-row"><input type="radio" name="mandarin" value={option} checked={formData.mandarin === option} onChange={() => updateField('mandarin', option)} /> {option}</label>
+              ))}
+              {errors.mandarin && <p className="field-error">{errors.mandarin}</p>}
+            </fieldset>
+            <fieldset className="wizard-field">
+              <legend>How should we position you with counterparts?*</legend>
+              {['Represent DJLD openly', 'Keep low-profile & confidential', 'Depends — let’s discuss'].map((option) => (
+                <label key={option} className="choice-row"><input type="radio" name="positioning" value={option} checked={formData.positioning === option} onChange={() => updateField('positioning', option)} /> {option}</label>
+              ))}
+              {errors.positioning && <p className="field-error">{errors.positioning}</p>}
+            </fieldset>
+            <div className="wizard-field">
+              <label htmlFor="sensitivity">Anything commercially sensitive to keep off the table in the group setting?</label>
+              <textarea id="sensitivity" rows="4" value={formData.sensitivity} onChange={(e) => updateField('sensitivity', e.target.value)} />
+            </div>
+            <fieldset className="wizard-field">
+              <legend>Want curated 1:1 meetings arranged around the group program?*</legend>
+              {['Yes please', 'Maybe', 'Group program is enough'].map((option) => (
+                <label key={option} className="choice-row"><input type="radio" name="meetings" value={option} checked={formData.meetings === option} onChange={() => updateField('meetings', option)} /> {option}</label>
+              ))}
+              {errors.meetings && <p className="field-error">{errors.meetings}</p>}
+              <label className="subfield">
+                <span>Willing to arrive early or stay later for meetings?</span>
+                <select value={formData.willingToExtend} onChange={(e) => updateField('willingToExtend', e.target.value)}>
+                  <option value="">Choose one</option>
+                  <option value="Yes">Yes</option>
+                  <option value="No">No</option>
+                  <option value="Maybe">Maybe</option>
+                </select>
+              </label>
+            </fieldset>
+            <div className="wizard-field">
+              <label htmlFor="tripWin">What would make this trip a clear win for you?*</label>
+              <textarea id="tripWin" rows="4" value={formData.tripWin} onChange={(e) => updateField('tripWin', e.target.value)} aria-invalid={Boolean(errors.tripWin)} />
+              {errors.tripWin && <p className="field-error">{errors.tripWin}</p>}
+            </div>
+          </div>
+        )}
+
+        {step === 4 && (
+          <div className="wizard-grid">
+            <fieldset className="wizard-field">
+              <legend>What do you want from the Guilin / Yangshuo leg?</legend>
+              {['Relaxation', 'Adventure', 'Photography', 'Cycling', 'Rock climbing', 'Li River cruise', 'Local culture & food'].map((option) => (
+                <label key={option} className="choice-row"><input type="checkbox" checked={formData.guilinGoals.includes(option)} onChange={() => toggleArrayValue('guilinGoals', option)} /> {option}</label>
+              ))}
+            </fieldset>
+            <div className="wizard-field">
+              <label htmlFor="culturalInterests">Cultural interests (history, art, nightlife, etc.)</label>
+              <textarea id="culturalInterests" rows="3" value={formData.culturalInterests} onChange={(e) => updateField('culturalInterests', e.target.value)} />
+            </div>
+            <fieldset className="wizard-field">
+              <legend>Wellness on the road</legend>
+              {['Hotel gym', 'Running routes', 'Spa', 'None needed'].map((option) => (
+                <label key={option} className="choice-row"><input type="checkbox" checked={formData.wellness.includes(option)} onChange={() => toggleArrayValue('wellness', option)} /> {option}</label>
+              ))}
+            </fieldset>
+            <fieldset className="wizard-field">
+              <legend>Bringing a +1 or colleague?*</legend>
+              {['No', 'Yes (details)'].map((option) => (
+                <label key={option} className="choice-row"><input type="radio" name="plusOne" value={option} checked={formData.plusOne === option} onChange={() => updateField('plusOne', option)} /> {option}</label>
+              ))}
+              {errors.plusOne && <p className="field-error">{errors.plusOne}</p>}
+              <label className="subfield">
+                <span>Details</span>
+                <input type="text" value={formData.plusOneDetails} onChange={(e) => updateField('plusOneDetails', e.target.value)} />
+              </label>
+            </fieldset>
+            <div className="wizard-field">
+              <label htmlFor="souvenirs">Gifts / souvenirs you’re interested in sourcing</label>
+              <textarea id="souvenirs" rows="3" value={formData.souvenirs} onChange={(e) => updateField('souvenirs', e.target.value)} />
+            </div>
+            <div className="wizard-field">
+              <label htmlFor="bucketList">Anything on your China bucket list?</label>
+              <textarea id="bucketList" rows="3" value={formData.bucketList} onChange={(e) => updateField('bucketList', e.target.value)} />
+            </div>
+          </div>
+        )}
+
+        {step === 5 && (
+          <div className="wizard-grid">
+            <div className="wizard-field">
+              <label htmlFor="preferredName">Preferred name / how to introduce you*</label>
+              <input id="preferredName" type="text" value={formData.preferredName} onChange={(e) => updateField('preferredName', e.target.value)} aria-invalid={Boolean(errors.preferredName)} />
+              {errors.preferredName && <p className="field-error">{errors.preferredName}</p>}
+            </div>
+            <div className="wizard-field">
+              <label htmlFor="introBio">One-line bio for intros & name badge*</label>
+              <input id="introBio" type="text" value={formData.introBio} onChange={(e) => updateField('introBio', e.target.value)} aria-invalid={Boolean(errors.introBio)} />
+              {errors.introBio && <p className="field-error">{errors.introBio}</p>}
+            </div>
+            <div className="wizard-field">
+              <label htmlFor="logoUpload">Company logo upload for intro materials</label>
+              <input id="logoUpload" type="file" accept=".png,.jpg,.jpeg,.svg" onChange={async (e) => {
+                const file = e.target.files && e.target.files[0];
+                if (!file) return;
+                const dataUrl = await readFileAsDataUrl(file);
+                updateField('logoFileName', file.name);
+                updateField('logoFileBase64', dataUrl);
+              }} />
+              {formData.logoFileName ? <p className="field-helper">Attached: {formData.logoFileName}</p> : null}
+            </div>
+            <div className="wizard-field">
+              <label htmlFor="emergencyContact">Emergency contact (name, relationship, phone)*</label>
+              <input id="emergencyContact" type="text" value={formData.emergencyContact} onChange={(e) => updateField('emergencyContact', e.target.value)} aria-invalid={Boolean(errors.emergencyContact)} />
+              {errors.emergencyContact && <p className="field-error">{errors.emergencyContact}</p>}
+            </div>
+            <fieldset className="wizard-field">
+              <legend>Photo/video consent*</legend>
+              {['Fine to photograph/film me', 'Please keep me out of shots', 'Ask me on the day'].map((option) => (
+                <label key={option} className="choice-row"><input type="radio" name="photoConsent" value={option} checked={formData.photoConsent === option} onChange={() => updateField('photoConsent', option)} /> {option}</label>
+              ))}
+              {errors.photoConsent && <p className="field-error">{errors.photoConsent}</p>}
+            </fieldset>
+            <fieldset className="wizard-field">
+              <legend>May we name you as a participant / use a testimonial later?*</legend>
+              {['Yes', 'No', 'Ask me later'].map((option) => (
+                <label key={option} className="choice-row"><input type="radio" name="testimonialConsent" value={option} checked={formData.testimonialConsent === option} onChange={() => updateField('testimonialConsent', option)} /> {option}</label>
+              ))}
+              {errors.testimonialConsent && <p className="field-error">{errors.testimonialConsent}</p>}
+            </fieldset>
+            <div className="wizard-field">
+              <label htmlFor="anythingElse">Anything else we should know?</label>
+              <textarea id="anythingElse" rows="4" value={formData.anythingElse} onChange={(e) => updateField('anythingElse', e.target.value)} />
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  if (submitted) {
+    return (
+      <div className="questionnaire-page">
+        <div className="questionnaire-shell">
+          <div className="questionnaire-intro questionnaire-intro--success">
+            <div className="logo-badge"><img src="../assets/Sinocircuit logo horizontal.svg" alt="Sinocircuit logo" /></div>
+            <p className="eyebrow"><span className="dot" /> Private pre-trip onboarding</p>
+            <h1>Thanks, Daniel — Matias will be in touch.</h1>
+            <p>We’ve got your answers and will follow up shortly. We’ll keep the trip tailored to your week on the ground.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="questionnaire-page">
+      <div className="questionnaire-shell">
+        <header className="questionnaire-intro">
+          <div className="logo-badge"><img src="../assets/Sinocircuit logo horizontal.svg" alt="Sinocircuit logo" /></div>
+          <p className="eyebrow"><span className="dot" /> Private pre-trip onboarding</p>
+          <h1>Hi Daniel</h1>
+          <p className="questionnaire-line">A few questions so we can tailor your week on the ground — takes about 10 minutes.</p>
+          <p className="questionnaire-meta">Trip · Sept 18–24, 2026 · Shenzhen + Guilin / Yangshuo</p>
+        </header>
+
+        <section className="wizard-card" aria-labelledby="wizard-title">
+          <div className="wizard-header">
+            <div>
+              <p className="eyebrow"><span className="dot" /> {steps[step].title}</p>
+              <h2 id="wizard-title">{steps[step].title}</h2>
+              <p>{steps[step].blurb}</p>
+            </div>
+            <div className="wizard-counter" aria-live="polite">{step + 1} / {steps.length}</div>
+          </div>
+
+          <div className="progress-bar" role="progressbar" aria-valuemin="1" aria-valuemax={steps.length} aria-valuenow={step + 1}>
+            <span style={{ width: `${((step + 1) / steps.length) * 100}%` }} />
+          </div>
+
+          {renderStepContent()}
+
+          {submitError ? <p className="field-error field-error--block">{submitError}</p> : null}
+
+          <div className="wizard-actions">
+            <button type="button" className="wizard-secondary" onClick={handleBack} disabled={step === 0}>Back</button>
+            {step === steps.length - 1 ? (
+              <button type="button" className="wizard-primary" onClick={handleSubmit} disabled={isSubmitting}>{isSubmitting ? 'Sending…' : 'Submit answers'}</button>
+            ) : (
+              <button type="button" className="wizard-primary" onClick={handleNext}>Next</button>
+            )}
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
 function StickyCTA({ visible, text }) {
   return (
     <div className={`sticky-cta ${visible ? 'visible' : ''}`}>
@@ -635,6 +1422,12 @@ function App() {
   };
 
   const { scrolled, pastHero } = useScrolled();
+  const isQuestionnaireRoute = window.location.pathname === '/welcome/daniel-8f3k2q' || window.location.pathname === '/welcome/daniel-8f3k2q/';
+
+  if (isQuestionnaireRoute) {
+    return <QuestionnairePage />;
+  }
+
   return (
     <>
       <Nav onHero={!pastHero} scrolled={scrolled} lang={lang} onLanguageChange={handleLanguageChange} text={text} />
