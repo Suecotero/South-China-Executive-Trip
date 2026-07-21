@@ -8,13 +8,16 @@ This repo now includes a private, single-client onboarding questionnaire for Dan
 
 ## Netlify setup
 Set these environment variables in Netlify:
-- RESEND_API_KEY
+- SMTP_HOST
+- SMTP_PORT
+- SMTP_SECURE
+- SMTP_USER
+- SMTP_PASS
 
-## Resend steps
-1. Create a Resend account and add your domain.
-2. Verify the sinocircuit.net domain in Resend.
-3. Ensure DNS records for SPF and DKIM are present for the domain.
-4. Use the from address onboarding@sinocircuit.net.
+Use the credentials for the existing Namecheap Private Email mailbox on the sinocircuit.net domain.
+
+- Port 465 uses SSL and should be configured with `SMTP_SECURE=true`.
+- Port 587 uses STARTTLS and should be configured with `SMTP_SECURE=false`.
 
 ## Notes
 - Passport numbers are only included in the email to Matias.

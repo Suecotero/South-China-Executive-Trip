@@ -1,0 +1,24 @@
+{
+  "name": "south-china-executive-trip",
+  "version": "1.0.0",
+  "description": "This repo now includes a private, single-client onboarding questionnaire for Daniel Bradtke for the Sept 18–24, 2026 Shenzhen + Guilin / Yangshuo trip.",
+  "main": "data.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Suecotero/South-China-Executive-Trip.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Suecotero/South-China-Executive-Trip/issues"
+  },
+  "homepage": "https://github.com/Suecotero/South-China-Executive-Trip#readme",
+  "dependencies": {
+    "nodemailer": "^9.0.3"
+  }
+}

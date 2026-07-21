@@ -1,3 +1,5 @@
+const nodemailer = require('nodemailer');
+
 exports.handler = async function handler(event) {
   if (event.httpMethod !== 'POST') {
     return {
@@ -10,68 +12,59 @@ exports.handler = async function handler(event) {
     const payload = JSON.parse(event.body || '{}');
     const { recipient, clientName, email, trip, answers = {} } = payload;
 
-    if (!process.env.RESEND_API_KEY) {
+    const smtpConfig = {
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT || 587),
+      secure: String(process.env.SMTP_SECURE || 'false').toLowerCase() === 'true',
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    };
+
+    if (!smtpConfig.host || !smtpConfig.auth.user || !smtpConfig.auth.pass) {
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: 'Missing RESEND_API_KEY' }),
+        body: JSON.stringify({ error: 'Missing SMTP configuration' }),
       };
     }
 
+    const transporter = nodemailer.createTransport(smtpConfig);
     const html = buildEmailHtml({ recipient, clientName, email, trip, answers });
     const attachments = getLogoAttachment(answers.logoFileBase64);
 
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: 'Sinocircuit Onboarding <onboarding@sinocircuit.net>',
-        to: [recipient],
-        replyTo: email,
-        subject: `Trip questionnaire — ${clientName || 'Daniel Bradtke'}`,
-        html,
-        ...(attachments ? { attachments: [attachments] } : {}),
-      }),
+    await transporter.sendMail({
+      from: process.env.SMTP_USER,
+      to: recipient,
+      replyTo: email,
+      subject: `Trip questionnaire — ${clientName || 'Daniel Bradtke'}`,
+      html,
+      attachments,
     });
 
-    const result = await response.json();
-    if (!response.ok) {
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: result.error || 'Failed to send email' }),
-      };
-    }
-
-    await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: 'Sinocircuit Onboarding <onboarding@sinocircuit.net>',
-        to: [email],
-        subject: 'We’ve got your answers — see you in Shenzhen',
-        html: `
-          <div style="font-family: Arial, sans-serif; color: #1c1a15; line-height: 1.6;">
-            <h2 style="margin-bottom: 8px;">Thanks, ${clientName || 'Daniel'} — we’ve got your answers.</h2>
-            <p>We’ll use this to tailor your week in Shenzhen and Guilin / Yangshuo. Matias will be in touch soon.</p>
-            <p style="margin-top: 20px;">Best,<br />Sinocircuit</p>
-          </div>
-        `,
-      }),
+    await transporter.sendMail({
+      from: process.env.SMTP_USER,
+      to: email,
+      replyTo: recipient,
+      subject: 'We’ve got your answers — see you in Shenzhen',
+      html: `
+        <div style="font-family: Arial, sans-serif; color: #1c1a15; line-height: 1.6;">
+          <h2 style="margin-bottom: 8px;">Thanks, ${clientName || 'Daniel'} — we’ve got your answers.</h2>
+          <p>We’ll use this to tailor your week in Shenzhen and Guilin / Yangshuo. Matias will be in touch soon.</p>
+          <p style="margin-top: 20px;">Best,<br />Sinocircuit</p>
+        </div>
+      `,
     });
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ ok: true, id: result.id }),
+      body: JSON.stringify({ ok: true }),
     };
   } catch (error) {
+    console.error('SMTP questionnaire send failed', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: error.message || 'Unexpected error' }),
+      body: JSON.stringify({ error: 'Failed to send questionnaire email' }),
     };
   }
 };
