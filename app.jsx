@@ -1258,7 +1258,7 @@ function QuestionnairePage() {
       <div className="questionnaire-page">
         <div className="questionnaire-shell">
           <div className="questionnaire-intro questionnaire-intro--success">
-            <div className="logo-badge"><img src="../assets/Sinocircuit logo horizontal.svg" alt="Sinocircuit logo" /></div>
+            <div className="logo-badge"><img src={`${ASSET_ROOT}Sinocircuit%20logo%20horizontal.svg`} alt="Sinocircuit logo" /></div>
             <p className="eyebrow"><span className="dot" /> Private pre-trip onboarding</p>
             <h1>Thanks, Daniel — Matias will be in touch.</h1>
             <p>We’ve got your answers and will follow up shortly. We’ll keep the trip tailored to your week on the ground.</p>
@@ -1272,7 +1272,7 @@ function QuestionnairePage() {
     <div className="questionnaire-page">
       <div className="questionnaire-shell">
         <header className="questionnaire-intro">
-          <div className="logo-badge"><img src="../assets/Sinocircuit logo horizontal.svg" alt="Sinocircuit logo" /></div>
+          <div className="logo-badge"><img src={`${ASSET_ROOT}Sinocircuit%20logo%20horizontal.svg`} alt="Sinocircuit logo" /></div>
           <p className="eyebrow"><span className="dot" /> Private pre-trip onboarding</p>
           <h1>Hi Daniel</h1>
           <p className="questionnaire-line">A few questions so we can tailor your week on the ground — takes about 10 minutes.</p>
