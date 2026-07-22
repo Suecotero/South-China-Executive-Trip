@@ -10,7 +10,22 @@ exports.handler = async function handler(event) {
 
   try {
     const payload = JSON.parse(event.body || '{}');
-    const { recipient, clientName, email, trip, answers = {} } = payload;
+    const { clientName, email, trip, answers = {} } = payload;
+
+    const requiredFields = ['clientName', 'email', 'trip', 'answers'];
+    const missingFields = requiredFields.filter((field) => {
+      if (field === 'answers') {
+        return !answers || typeof answers !== 'object' || Array.isArray(answers);
+      }
+      return !payload[field];
+    });
+
+    if (missingFields.length) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: `Missing required fields: ${missingFields.join(', ')}` }),
+      };
+    }
 
     const smtpConfig = {
       host: process.env.SMTP_HOST,
@@ -41,12 +56,12 @@ exports.handler = async function handler(event) {
     }
 
     const transporter = nodemailer.createTransport(smtpConfig);
-    const html = buildEmailHtml({ recipient, clientName, email, trip, answers });
+    const html = buildEmailHtml({ recipient: 'matias@sinocircuit.net', clientName, email, trip, answers });
     const attachments = getLogoAttachment(answers.logoFileBase64);
 
     await transporter.sendMail({
       from: process.env.SMTP_USER,
-      to: recipient,
+      to: 'matias@sinocircuit.net',
       replyTo: email,
       subject: `Trip questionnaire — ${clientName || 'Daniel Bradtke'}`,
       html,
@@ -55,8 +70,8 @@ exports.handler = async function handler(event) {
 
     await transporter.sendMail({
       from: process.env.SMTP_USER,
-      to: email,
-      replyTo: recipient,
+      to: 'daniel@djld.vc',
+      replyTo: 'matias@sinocircuit.net',
       subject: 'We’ve got your answers — see you in Shenzhen',
       html: `
         <div style="font-family: Arial, sans-serif; color: #1c1a15; line-height: 1.6;">
