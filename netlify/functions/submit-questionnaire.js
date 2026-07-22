@@ -70,7 +70,8 @@ exports.handler = async function handler(event) {
 
     await transporter.sendMail({
       from: process.env.SMTP_USER,
-      to: 'daniel@djld.vc',
+      // TODO: restore daniel@djld.vc before sending him the link.
+      to: 'matias@sinocircuit.net',
       replyTo: 'matias@sinocircuit.net',
       subject: 'We’ve got your answers — see you in Shenzhen',
       html: `
