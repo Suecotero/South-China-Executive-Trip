@@ -22,7 +22,18 @@ exports.handler = async function handler(event) {
       },
     };
 
-    if (!smtpConfig.host || !smtpConfig.auth.user || !smtpConfig.auth.pass) {
+    const missingSmtpKeys = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_SECURE', 'SMTP_USER', 'SMTP_PASS'].filter((key) => {
+      if (key === 'SMTP_PORT') {
+        return !process.env.SMTP_PORT;
+      }
+      if (key === 'SMTP_SECURE') {
+        return !process.env.SMTP_SECURE;
+      }
+      return !process.env[key];
+    });
+
+    if (missingSmtpKeys.length) {
+      console.error('Missing SMTP configuration keys:', missingSmtpKeys.join(', '));
       return {
         statusCode: 500,
         body: JSON.stringify({ error: 'Missing SMTP configuration' }),
