@@ -340,6 +340,35 @@ a { color: inherit; }
   }
 }
 
+/* Extra small screens: prevent single-word stacking and allow wider heading container */
+@media (max-width: 420px) {
+  .hero-content {
+    padding-left: 18px;
+    padding-right: 18px;
+    padding-top: 40px;
+  }
+  .hero .display,
+  .hero h1,
+  .hero .heroTag,
+  .hero .heroTagline {
+    font-size: clamp(18px, 7vw, 30px) !important;
+    line-height: 1.06 !important;
+    max-width: 96% !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    -webkit-hyphens: auto;
+    hyphens: auto;
+  }
+  /* Ensure no column/width limiting rules force narrow layout */
+  .hero .display * {
+    column-count: auto !important;
+    max-width: 100% !important;
+  }
+  .hero-stage {
+    min-height: 34vh;
+  }
+}
+
 @media (max-width: 800px) {
   .nav {
     padding: 12px 18px;
