@@ -258,10 +258,11 @@ function Hero({ text }) {
             <iframe src={window.location.pathname.startsWith('/welcome/') ? '/Trip%20Map%20-%20Animated.html' : '../Trip Map - Animated.html'} style={{ width: '100%', height: '100%', border: 'none', flex: 1 }} title="Animated Trip Map" allow="autoplay; fullscreen"></iframe>
           </div>
 
+          <p className="hero-tag" style={{ fontSize: '22px' }}>
+            {text.heroTag}
+          </p>
+
           <div className="hero-bottom">
-            <p className="hero-tag" style={{ fontSize: '22px' }}>
-              {text.heroTag}
-            </p>
             <div className="fact">
               <div className="fact-label">{text.factDuration}</div>
               <div className="fact-value">7 days</div>
